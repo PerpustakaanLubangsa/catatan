@@ -1,1 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kertas Full Screen Auto-Save Tebal</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        /* Mengatur HTML dan BODY agar tidak ada margin/padding standar */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+            /* Latar belakang putih lembut yang tidak menyakitkan mata */
+            background-color: #FAF9F6; 
+        }
+        
+        #catatan-area {
+            width: 100%;
+            height: 100%;
+            padding: 40px; 
+            font-size: 20px; 
+            line-height: 1.7;
+            border: none;
+            box-shadow: none;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            /* Latar belakang sama dengan body */
+            background-color: #FAF9F6; 
+            
+            /* MODIFIKASI FONT STYLING: */
+            /* Menggunakan font serif yang lebih berisi */
+            font-family: 'Georgia', 'Times New Roman', Times, serif; 
+            /* Membuat teks menjadi tebal (bold) */
+            font-weight: bold; 
+            /* Warna Cyan yang sedikit lebih gelap agar kontras */
+            color: #00838F; 
+        }
+        
+        #status-simpan {
+            position: fixed; 
+            bottom: 15px;
+            right: 15px;
+            padding: 5px 10px;
+            /* Latar belakang status juga disesuaikan */
+            background-color: rgba(250, 249, 246, 0.9);
+            border-radius: 4px;
+            font-family: sans-serif;
+            font-size: 12px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .status-saved {
+            color: #4CAF50; /* Hijau yang lebih lembut */
+            font-weight: bold;
+        }
+        .status-saving {
+            color: #FF9800; /* Oranye yang lebih lembut */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
+    <textarea id="catatan-area" placeholder="Mulai ketik catatan Anda di sini... (Auto-Save Aktif)"></textarea>
+    <div id="status-simpan">Memuat...</div>
+
+    <script>
+        // 1. KONFIGURASI FIREBASE (menggunakan data yang Anda berikan)
+        const firebaseConfig = {
+          apiKey: "AIzaSyBoNUK_1_Hfqa8yHUVZ_TWOc28zkImWPbw",
+          authDomain: "perpustakaandata-c7726.firebaseapp.com",
+          databaseURL: "https://perpustakaandata-c7726-default-rtdb.firebaseio.com",
+          projectId: "perpustakaandata-c7726",
+          storageBucket: "perpustakaandata-c7726.firebasestorage.app",
+          messagingSenderId: "1099434992232",
+          appId: "1:1099434992232:web:90fbc3e17c7a4ae1a051dd"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Referensi ke Realtime Database
+        const database = firebase.database();
+        const noteRef = database.ref('singleNote/content'); 
+
+        // Mendapatkan elemen DOM
+        const catatanArea = document.getElementById('catatan-area');
+        const statusSimpan = document.getElementById('status-simpan');
+        let saveTimeout; 
+
+        // 2. MUAT DATA SAAT HALAMAN DIBUKA (Realtime Listener)
+        noteRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data !== null) {
+                catatanArea.value = data.teks || '';
+                statusSimpan.innerHTML = '<span class="status-saved">Tersimpan dan Dimuat</span>';
+            } else {
+                 statusSimpan.innerHTML = 'Catatan kosong. Mulai mengetik...';
+            }
+        }, (error) => {
+            console.error("Gagal memuat catatan: ", error);
+            statusSimpan.innerHTML = '<span style="color:red;">Gagal memuat!</span>';
+        });
+
+        // 3. FUNGSI SIMPAN OTOMATIS (AUTO-SAVE dengan Debounce 1000ms)
+        function autoSave() {
+            statusSimpan.innerHTML = '<span class="status-saving">Menyimpan...</span>';
+            const teksSaatIni = catatanArea.value;
+
+            noteRef.set({
+                teks: teksSaatIni,
+                timestamp: new Date().toISOString()
+            }).then(() => {
+                statusSimpan.innerHTML = '<span class="status-saved">Tersimpan</span>';
+            }).catch((error) => {
+                console.error("Gagal menyimpan catatan: ", error);
+                statusSimpan.innerHTML = '<span style="color:red;">Gagal menyimpan!</span>';
+            });
+        }
+
+        // Event listener untuk input area ketik
+        catatanArea.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(autoSave, 1000); // Tunda simpan selama 1 detik
+            statusSimpan.innerHTML = 'Mengetik...';
+        });
+
+        // Simpan catatan jika pengguna meninggalkan halaman
+        window.addEventListener('beforeunload', autoSave); 
+    </script>
+</body>
+</html>
