@@ -3,72 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kertas Full Screen Auto-Save Tebal</title>
+    <title>Aplikasi Catatan Minimalis dengan Konfirmasi Ikon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        /* Mengatur HTML dan BODY agar tidak ada margin/padding standar */
-        html, body {
-            height: 100%;
+        /* Menggunakan border-box secara global untuk kalkulasi lebar yang konsisten */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* Tetapkan lebar maksimal seragam untuk elemen inti */
+        :root {
+            --max-element-width: 650px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F5F8FA; 
             margin: 0;
+            padding: 20px 10px; 
+            display: flex;
+            justify-content: center; 
+        }
+        #app-container {
+            width: 100%;
+            max-width: 700px; 
+        }
+
+        /* --- Input Area Satu Baris --- */
+        #input-area {
+            width: 100%;
+            max-width: var(--max-element-width);
+            margin: 0 auto 20px auto; 
+            background-color: #FFFFFF;
+            border: 1px solid #E0E0E0;
+            border-radius: 12px; 
+            padding: 10px 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        #input-catatan {
+            width: 100%;
             padding: 0;
+            border: none;
+            font-size: 16px; 
+            font-weight: 600; 
+            resize: none;
+            height: 24px; 
+            background-color: transparent;
+            color: #222;
+            line-height: 1.5;
             overflow: hidden; 
-            /* Latar belakang putih lembut yang tidak menyakitkan mata */
-            background-color: #FAF9F6; 
+            white-space: nowrap;
+        }
+        #input-catatan:focus {
+            outline: none;
         }
         
-        #catatan-area {
+        /* --- Daftar Catatan Vertikal Satu Baris --- */
+        #daftar-catatan {
+            width: 100%; 
+            max-width: var(--max-element-width);
+            margin: 0 auto; 
+            list-style: none;
+            padding: 0;
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+        .item-catatan {
+            width: 100%; 
+            height: auto; 
+            overflow: hidden; 
+            background-color: #FFFFFF;
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            border-left: 5px solid #00BCD4; 
+            position: relative;
+            font-size: 16px; 
+            font-weight: 600; 
+            color: #333;
+            line-height: 1.5; 
+            white-space: nowrap; 
+            text-overflow: ellipsis; 
+            transition: box-shadow 0.3s;
+            display: flex; 
+            align-items: center;
+            justify-content: space-between;
+
+            /* Animasi Catatan (0.2s) */
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out, box-shadow 0.3s;
+        }
+        /* Class yang ditambahkan JAVASCRIPT untuk memicu animasi fade-in */
+        .item-catatan.fade-in {
+            opacity: 0;
+        }
+        
+        .catatan-teks {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+            padding-right: 15px;
+        }
+        
+        /* --- Tombol Centang (Hapus) --- */
+        .btn-hapus {
+            position: static; 
+            flex-shrink: 0; 
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 3px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            margin-left: 10px;
+        }
+        .btn-hapus:hover {
+            opacity: 1;
+        }
+        .btn-hapus svg {
+            width: 22px; 
+            height: 22px;
+            fill: #4CAF50; 
+        }
+
+        /* Custom Confirm Modal CSS */
+        #custom-confirm {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            padding: 40px; 
-            font-size: 20px; 
-            line-height: 1.7;
-            border: none;
-            box-shadow: none;
-            resize: none;
-            box-sizing: border-box;
-            outline: none;
-            /* Latar belakang sama dengan body */
-            background-color: #FAF9F6; 
+            background-color: rgba(0, 0, 0, 0.6); 
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px; 
             
-            /* MODIFIKASI FONT STYLING: */
-            /* Menggunakan font serif yang lebih berisi */
-            font-family: 'Georgia', 'Times New Roman', Times, serif; 
-            /* Membuat teks menjadi tebal (bold) */
-            font-weight: bold; 
-            /* Warna Cyan yang sedikit lebih gelap agar kontras */
-            color: #00838F; 
+            /* Animasi Fade-in Overlay (0.2s) */
+            opacity: 0; 
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        #confirm-box {
+            background-color: #FFFFFF;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            max-width: 350px;
+            width: 100%;
+            text-align: center;
+
+            /* Animasi Scale Up (0.2s) */
+            transform: scale(0.7); 
+            transition: transform 0.2s ease-out; 
         }
         
-        #status-simpan {
-            position: fixed; 
-            bottom: 15px;
-            right: 15px;
-            padding: 5px 10px;
-            /* Latar belakang status juga disesuaikan */
-            background-color: rgba(250, 249, 246, 0.9);
-            border-radius: 4px;
-            font-family: sans-serif;
-            font-size: 12px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        /* Class yang ditambahkan JAVASCRIPT untuk menampilkan dan menganimasikan modal */
+        #custom-confirm.show {
+            display: flex;
+            opacity: 1; /* Fade in background */
         }
-        .status-saved {
-            color: #4CAF50; /* Hijau yang lebih lembut */
-            font-weight: bold;
+
+        #custom-confirm.show #confirm-box {
+            transform: scale(1); 
         }
-        .status-saving {
-            color: #FF9800; /* Oranye yang lebih lembut */
-            font-weight: bold;
+
+        #confirm-box p {
+            margin-top: 0;
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        /* PERUBAHAN UTAMA: Styling Tombol Ikon */
+        #confirm-buttons button {
+            padding: 10px 15px; /* Padding lebih kecil */
+            margin: 0 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 20px; /* Ukuran font lebih besar untuk ikon */
+            transition: background-color 0.2s;
+            min-width: 50px; /* Minimal lebar tombol */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            line-height: 1;
+        }
+        
+        #btn-cancel {
+            background-color: #F44336; /* Merah untuk silang */
+            color: #FFFFFF;
+        }
+        #btn-cancel:hover {
+            background-color: #D32F2F;
+        }
+        #btn-confirm {
+            background-color: #4CAF50; /* Hijau untuk centang */
+            color: #FFFFFF;
+        }
+        #btn-confirm:hover {
+            background-color: #388E3C;
+        }
+
+        /* Media Query untuk Mobile/Layar Sangat Kecil */
+        @media (max-width: 480px) {
+            body {
+                padding: 15px 8px; 
+            }
+            #input-area, #daftar-catatan {
+                max-width: 100%; 
+                margin-left: 0;
+                margin-right: 0;
+            }
         }
     </style>
 </head>
 <body>
 
-    <textarea id="catatan-area" placeholder="Mulai ketik catatan Anda di sini... (Auto-Save Aktif)"></textarea>
-    <div id="status-simpan">Memuat...</div>
+    <div id="app-container">
 
+        <div id="input-area">
+            <input type="text" id="input-catatan" placeholder="Ketik tugas baru lalu tekan Enter..." />
+        </div>
+
+        <ul id="daftar-catatan">
+            </ul>
+    </div>
+
+    <div id="custom-confirm">
+        <div id="confirm-box">
+            <p>Selesaikan tugas ini?</p> 
+            <div id="confirm-buttons">
+                <button id="btn-cancel" title="Batal Hapus">✖</button>
+                <button id="btn-confirm" title="Selesaikan Tugas">✔</button>
+            </div>
+        </div>
+    </div>
     <script>
-        // 1. KONFIGURASI FIREBASE (menggunakan data yang Anda berikan)
+        // 1. KONFIGURASI FIREBASE
         const firebaseConfig = {
           apiKey: "AIzaSyBoNUK_1_Hfqa8yHUVZ_TWOc28zkImWPbw",
           authDomain: "perpustakaandata-c7726.firebaseapp.com",
@@ -79,57 +259,141 @@
           appId: "1:1099434992232:web:90fbc3e17c7a4ae1a051dd"
         };
 
-        // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
-
-        // Referensi ke Realtime Database
         const database = firebase.database();
-        const noteRef = database.ref('singleNote/content'); 
+        const catatanRef = database.ref('daftarCatatan'); 
 
         // Mendapatkan elemen DOM
-        const catatanArea = document.getElementById('catatan-area');
-        const statusSimpan = document.getElementById('status-simpan');
-        let saveTimeout; 
+        const inputCatatan = document.getElementById('input-catatan');
+        const daftarCatatan = document.getElementById('daftar-catatan');
 
-        // 2. MUAT DATA SAAT HALAMAN DIBUKA (Realtime Listener)
-        noteRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data !== null) {
-                catatanArea.value = data.teks || '';
-                statusSimpan.innerHTML = '<span class="status-saved">Tersimpan dan Dimuat</span>';
-            } else {
-                 statusSimpan.innerHTML = 'Catatan kosong. Mulai mengetik...';
+        // Elemen Modal
+        const customConfirm = document.getElementById('custom-confirm');
+        const btnCancel = document.getElementById('btn-cancel');
+        const btnConfirm = document.getElementById('btn-confirm');
+        let idToDelete = null; 
+        
+        // Waktu Transisi CSS
+        const TRANSITION_DURATION = 200; // 200ms
+
+        // Fungsi Tambah Catatan 
+        function tambahCatatan() {
+            const teksCatatan = inputCatatan.value.trim();
+            if (teksCatatan !== "") {
+                const waktu = new Date().toLocaleString('id-ID', {
+                    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                
+                catatanRef.push({
+                    teks: teksCatatan,
+                    timestamp: waktu
+                }).then(() => {
+                    inputCatatan.value = ''; 
+                }).catch((error) => {
+                    console.error("Gagal menambahkan catatan: ", error);
+                    alert("Gagal menambahkan catatan.");
+                });
             }
-        }, (error) => {
-            console.error("Gagal memuat catatan: ", error);
-            statusSimpan.innerHTML = '<span style="color:red;">Gagal memuat!</span>';
+        }
+        
+        // 2. FUNGSI SIMPAN DENGAN TOMBOL ENTER
+        inputCatatan.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                tambahCatatan();
+            }
         });
 
-        // 3. FUNGSI SIMPAN OTOMATIS (AUTO-SAVE dengan Debounce 1000ms)
-        function autoSave() {
-            statusSimpan.innerHTML = '<span class="status-saving">Menyimpan...</span>';
-            const teksSaatIni = catatanArea.value;
-
-            noteRef.set({
-                teks: teksSaatIni,
-                timestamp: new Date().toISOString()
-            }).then(() => {
-                statusSimpan.innerHTML = '<span class="status-saved">Tersimpan</span>';
-            }).catch((error) => {
-                console.error("Gagal menyimpan catatan: ", error);
-                statusSimpan.innerHTML = '<span style="color:red;">Gagal menyimpan!</span>';
-            });
+        // Fungsi Batal Hapus (Menangani animasi keluar)
+        function cancelDelete() {
+            customConfirm.classList.remove('show'); 
+            
+            // Sembunyikan setelah transisi selesai
+            setTimeout(() => {
+                customConfirm.style.display = 'none'; 
+            }, TRANSITION_DURATION); 
+            idToDelete = null; 
+        }
+        
+        // Fungsi Konfirmasi Hapus 
+        function confirmDelete() {
+            if (idToDelete) {
+                catatanRef.child(idToDelete).remove().catch((error) => {
+                    console.error("Gagal menghapus catatan: ", error);
+                    alert("Gagal menghapus catatan.");
+                });
+            }
+            // Sembunyikan modal setelah aksi
+            cancelDelete();
         }
 
-        // Event listener untuk input area ketik
-        catatanArea.addEventListener('input', () => {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(autoSave, 1000); // Tunda simpan selama 1 detik
-            statusSimpan.innerHTML = 'Mengetik...';
+        // 3. FUNGSI HAPUS CATATAN (dimodifikasi untuk menampilkan modal)
+        window.hapusCatatan = function(id) {
+            idToDelete = id; 
+            customConfirm.style.display = 'flex'; 
+            
+            // Timeout kecil untuk memicu transisi
+            setTimeout(() => {
+                customConfirm.classList.add('show'); // Memicu fade-in dan scale-up
+                btnConfirm.focus(); // Fokus tetap pada tombol konfirmasi (centang)
+            }, 5); 
+        }
+
+        // Event Listeners untuk tombol modal
+        btnCancel.addEventListener('click', cancelDelete);
+        btnConfirm.addEventListener('click', confirmDelete);
+
+        // Event Listener untuk tombol ENTER dan ESCAPE pada MODAL
+        document.addEventListener('keydown', (e) => {
+            if (customConfirm.classList.contains('show')) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    confirmDelete();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelDelete();
+                }
+            }
         });
 
-        // Simpan catatan jika pengguna meninggalkan halaman
-        window.addEventListener('beforeunload', autoSave); 
+
+        // SVG Checkmark Icon (Centang Tebal dan Berbulat)
+        const checkmarkCircleSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="#4CAF50" stroke-width="2.5" fill="none"/>
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="#4CAF50"/>
+            </svg>
+        `;
+
+        // 4. FUNGSI BACA DATA REALTIME (dengan animasi fade-in catatan baru)
+        catatanRef.on('child_added', (snapshot) => {
+            const catatan = snapshot.val();
+            const catatanId = snapshot.key; 
+
+            const listItem = document.createElement('li');
+            listItem.className = 'item-catatan fade-in'; // Tambahkan class fade-in
+            listItem.setAttribute('data-id', catatanId);
+            
+            listItem.innerHTML = `
+                <div class="catatan-teks">${catatan.teks}</div>
+                <button class="btn-hapus" onclick="hapusCatatan('${catatanId}')">${checkmarkCircleSvg}</button>
+            `;
+            
+            daftarCatatan.prepend(listItem);
+            
+            // Panggil timeout untuk memicu transisi dari opacity 0 ke 1
+            setTimeout(() => {
+                listItem.classList.remove('fade-in');
+            }, 5); 
+        });
+        
+        catatanRef.on('child_removed', (snapshot) => {
+            const catatanId = snapshot.key;
+            const itemToRemove = document.querySelector(`li[data-id='${catatanId}']`);
+            if (itemToRemove) {
+                itemToRemove.remove();
+            }
+        });
     </script>
 </body>
 </html>
