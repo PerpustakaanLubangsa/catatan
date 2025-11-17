@@ -3,252 +3,635 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Catatan Minimalis dengan Konfirmasi Ikon</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Noteku - Catatan Profesional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        /* Menggunakan border-box secara global untuk kalkulasi lebar yang konsisten */
-        *, *::before, *::after {
+        /* --- CSS Styling Lembut & Profesional --- */
+        
+        :root {
+            --accent-color: #3f51b5; /* Biru Indigo yang Profesional */
+            --accent-light: rgba(63, 81, 181, 0.1); 
+            --main-bg: #f5f5f5; /* Abu-abu Ekstra Ringan */
+            --paper-bg: #ffffff;
+            --text-color: #212121;
+            --secondary-text: #757575;
+            --border-color: #e0e0e0;
+            --soft-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* Bayangan Lembut */
+            --delete-color: #f44336; /* Merah untuk bahaya */
+            --sidebar-width: 280px;
+        }
+        
+        * {
             box-sizing: border-box;
         }
 
-        /* Tetapkan lebar maksimal seragam untuk elemen inti */
-        :root {
-            --max-element-width: 650px;
-        }
-
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #F5F8FA; 
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--main-bg);
             margin: 0;
-            padding: 20px 10px; 
-            display: flex;
-            justify-content: center; 
-        }
-        #app-container {
-            width: 100%;
-            max-width: 700px; 
-        }
-
-        /* --- Input Area Satu Baris --- */
-        #input-area {
-            width: 100%;
-            max-width: var(--max-element-width);
-            margin: 0 auto 20px auto; 
-            background-color: #FFFFFF;
-            border: 1px solid #E0E0E0;
-            border-radius: 12px; 
-            padding: 10px 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-        }
-        #input-catatan {
-            width: 100%;
             padding: 0;
-            border: none;
-            font-size: 16px; 
-            font-weight: 600; 
-            resize: none;
-            height: 24px; 
-            background-color: transparent;
-            color: #222;
-            line-height: 1.5;
-            overflow: hidden; 
-            white-space: nowrap;
-        }
-        #input-catatan:focus {
-            outline: none;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            font-weight: 400; 
         }
         
-        /* --- Daftar Catatan Vertikal Satu Baris --- */
-        #daftar-catatan {
-            width: 100%; 
-            max-width: var(--max-element-width);
-            margin: 0 auto; 
+        /* === Sidebar Kiri === */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background-color: var(--paper-bg);
+            border-right: 1px solid var(--border-color);
+            padding-top: 25px;
+            box-shadow: 1px 0 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--secondary-text);
+            padding: 0 25px 15px;
+            margin: 0 0 15px 0;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .folder-list-sidebar {
             list-style: none;
             padding: 0;
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px; 
+            margin: 0;
+            flex-grow: 1;
         }
-        .item-catatan {
-            width: 100%; 
-            height: auto; 
-            overflow: hidden; 
-            background-color: #FFFFFF;
-            padding: 10px 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
-            border-left: 5px solid #00BCD4; 
-            position: relative;
-            font-size: 16px; 
-            font-weight: 600; 
-            color: #333;
-            line-height: 1.5; 
-            white-space: nowrap; 
-            text-overflow: ellipsis; 
-            transition: box-shadow 0.3s;
-            display: flex; 
+
+        .folder-item {
+            display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            border-radius: 0 25px 25px 0; 
+            margin-right: 15px; 
+            color: var(--text-color);
+        }
 
-            /* Animasi Catatan (0.2s) */
-            opacity: 1;
-            transition: opacity 0.2s ease-in-out, box-shadow 0.3s;
+        .folder-item:hover {
+            background-color: #eeeeee;
         }
-        /* Class yang ditambahkan JAVASCRIPT untuk memicu animasi fade-in */
-        .item-catatan.fade-in {
-            opacity: 0;
+        .folder-item.active {
+            background-color: var(--accent-light);
+            font-weight: 500;
+            color: var(--accent-color);
         }
-        
-        .catatan-teks {
-            flex-grow: 1;
-            overflow: hidden;
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
-            padding-right: 15px;
+        .folder-item.active .folder-name {
+            font-weight: 500;
         }
         
-        /* --- Tombol Centang (Hapus) --- */
-        .btn-hapus {
-            position: static; 
-            flex-shrink: 0; 
+        .folder-name {
+             display: flex;
+             align-items: center;
+             gap: 10px;
+        }
+        
+        /* --- STYLING TOMBOL HAPUS FOLDER --- */
+        .delete-folder-btn {
             background: none;
             border: none;
+            color: var(--secondary-text);
             cursor: pointer;
-            padding: 3px;
-            opacity: 0.7;
-            transition: opacity 0.2s;
+            font-size: 0.9rem;
+            padding: 5px;
+            line-height: 1;
+            transition: color 0.2s, background-color 0.2s, opacity 0.2s;
+            border-radius: 50%;
+            opacity: 0; /* Sembunyikan secara default */
             margin-left: 10px;
-        }
-        .btn-hapus:hover {
-            opacity: 1;
-        }
-        .btn-hapus svg {
-            width: 22px; 
-            height: 22px;
-            fill: #4CAF50; 
+            width: 30px; 
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Custom Confirm Modal CSS */
-        #custom-confirm {
+        /* Tampilkan tombol hapus saat folder di-hover */
+        .folder-item:hover .delete-folder-btn {
+            opacity: 1;
+        }
+        
+        .delete-folder-btn:hover {
+            color: var(--delete-color);
+            background-color: #fce4e4;
+        }
+        
+        .delete-folder-btn svg {
+            width: 18px; 
+            height: 18px;
+        }
+        /* --- AKHIR STYLING TOMBOL HAPUS FOLDER --- */
+
+        .folder-creator {
+            padding: 20px 25px;
+            border-top: 1px solid var(--border-color);
+        }
+        .folder-creator input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .folder-creator input:focus {
+            border-color: var(--accent-color);
+        }
+        .folder-creator button {
+             width: 100%;
+             padding: 10px;
+             background-color: var(--accent-color);
+             color: white;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             font-weight: 500;
+             transition: background-color 0.2s;
+        }
+        .folder-creator button:hover {
+            background-color: #303f9f;
+        }
+        
+        /* === Konten Utama & Header === */
+        .main-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: var(--paper-bg); 
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-weight: 400;
+            color: var(--text-color);
+            flex-grow: 1;
+            font-size: 1.6rem;
+        }
+        
+        #menuButton {
+            background: none;
+            border: none;
+            color: var(--secondary-text);
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0 10px 0 0;
+            line-height: 1;
+            transition: color 0.2s;
+            display: none; 
+        }
+        #menuButton:hover {
+            color: var(--accent-color);
+        }
+        
+        .content {
+            padding: 0 30px; 
+            flex-grow: 1;
+        }
+
+        /* === Kotak Input Catatan === */
+        .create-note-box {
+            background-color: var(--paper-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: var(--soft-shadow); 
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease; 
+        }
+
+        .create-note-box.active {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            border-color: var(--accent-color);
+        }
+
+        .note-input { 
+            border: none; 
+            width: 100%; 
+            padding: 5px 0; 
+            font-size: 1rem; 
+            font-weight: 400; 
+            outline: none; 
+            resize: none; 
+            box-sizing: border-box; 
+            background: transparent;
+        }
+        
+        #noteTitle { 
+            font-weight: 500; 
+            margin-bottom: 5px; 
+        }
+
+        #noteContent, #addNoteBtn { 
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out, padding 0.3s ease, margin 0.3s ease;
+            display: block; 
+        }
+        
+        .create-note-box.active #noteContent { 
+            max-height: 100px; 
+            opacity: 1; 
+            padding-top: 5px;
+            padding-bottom: 10px;
+        }
+        
+        .create-note-box.active #addNoteBtn { 
+            max-height: 50px;
+            opacity: 1; 
+            padding: 8px 15px; 
+            margin-top: 10px;
+            align-self: flex-end; 
+        }
+        
+        #addNoteBtn { 
+            background-color: var(--accent-color); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            font-size: 0.9rem; 
+            font-weight: 500; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+            width: fit-content;
+        }
+        #addNoteBtn:hover { 
+            background-color: #303f9f;
+        }
+
+        /* === Tampilan Catatan (Card) === */
+
+        #notesGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            padding-bottom: 50px;
+        }
+
+        .note-card {
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: var(--soft-shadow);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            word-wrap: break-word;
+            height: 220px; 
+            overflow: hidden; 
+            background-color: var(--paper-bg);
+            border: 1px solid var(--border-color);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .note-card:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .note-card a {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .note-card-title { 
+            margin: 0 0 10px 0; 
+            font-size: 1.2rem; 
+            font-weight: 500; 
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .note-card-content { 
+            margin: 0; 
+            font-size: 0.95rem; 
+            color: var(--secondary-text);
+            white-space: pre-wrap; 
+            display: -webkit-box;
+            -webkit-line-clamp: 7; 
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.5;
+        }
+        
+        .note-card-folder { 
+            font-size: 0.75rem; 
+            color: var(--secondary-text); 
+            position: absolute; 
+            bottom: 10px; 
+            left: 18px; 
+            right: 18px; 
+            padding-top: 5px; 
+            border-top: 1px solid var(--border-color); 
+            background-color: var(--paper-bg); 
+            z-index: 10;
+        }
+
+        .delete-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--delete-color); cursor: pointer; font-size: 1.1rem; opacity: 0; transition: opacity 0.2s; z-index: 20; padding: 5px; border-radius: 50%; }
+        .note-card:hover .delete-btn { opacity: 1; background-color: #ffebee; }
+        .delete-btn:hover { background-color: #fce4e4; }
+        .delete-btn svg { width: 18px; height: 18px; }
+
+        /* === MODAL UMUM & EDIT MODAL (Diperhalus) === */
+        
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); 
+            background-color: rgba(0, 0, 0, 0.5); 
             display: none; 
             justify-content: center;
             align-items: center;
-            z-index: 1000;
-            padding: 10px; 
-            
-            /* Animasi Fade-in Overlay (0.2s) */
-            opacity: 0; 
-            transition: opacity 0.2s ease-in-out;
+            z-index: 2000;
         }
-
-        #confirm-box {
-            background-color: #FFFFFF;
-            padding: 25px;
+        
+        .modal-content {
+            background-color: var(--paper-bg);
             border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-            max-width: 350px;
-            width: 100%;
-            text-align: center;
-
-            /* Animasi Scale Up (0.2s) */
-            transform: scale(0.7); 
-            transition: transform 0.2s ease-out; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            padding: 25px;
+            position: relative;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-out;
         }
-        
-        /* Class yang ditambahkan JAVASCRIPT untuk menampilkan dan menganimasikan modal */
-        #custom-confirm.show {
+
+        .modal-overlay.active {
             display: flex;
-            opacity: 1; /* Fade in background */
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
         }
 
-        #custom-confirm.show #confirm-box {
-            transform: scale(1); 
+        #confirmationModal .modal-content {
+            max-width: 380px;
+            text-align: center;
+            padding: 30px;
         }
-
-        #confirm-box p {
-            margin-top: 0;
-            font-size: 17px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 20px;
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end; 
+            gap: 15px;
+            margin-top: 20px;
         }
-        
-        /* PERUBAHAN UTAMA: Styling Tombol Ikon */
-        #confirm-buttons button {
-            padding: 10px 15px; /* Padding lebih kecil */
-            margin: 0 10px;
+        .modal-btn {
+            padding: 10px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 4px;
+            font-weight: 500;
             cursor: pointer;
-            font-weight: 700;
-            font-size: 20px; /* Ukuran font lebih besar untuk ikon */
-            transition: background-color 0.2s;
-            min-width: 50px; /* Minimal lebar tombol */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            line-height: 1;
+            transition: background-color 0.2s, opacity 0.2s;
+            text-transform: uppercase;
         }
-        
-        #btn-cancel {
-            background-color: #F44336; /* Merah untuk silang */
-            color: #FFFFFF;
+        #confirmCancel {
+            background-color: transparent;
+            color: var(--secondary-text);
         }
-        #btn-cancel:hover {
-            background-color: #D32F2F;
+        #confirmCancel:hover {
+            background-color: #f0f0f0;
         }
-        #btn-confirm {
-            background-color: #4CAF50; /* Hijau untuk centang */
-            color: #FFFFFF;
+        .modal-btn.action-safe {
+            background-color: var(--accent-color);
+            color: white;
         }
-        #btn-confirm:hover {
-            background-color: #388E3C;
+        .modal-btn.action-safe:hover {
+            background-color: #303f9f;
         }
 
-        /* Media Query untuk Mobile/Layar Sangat Kecil */
-        @media (max-width: 480px) {
+        /* Edit Modal Spesifik */
+        #editModalContent {
+            max-width: 900px; 
+            min-height: 500px; 
+            padding: 20px 30px; 
+            display: flex; 
+            flex-direction: column;
+        }
+
+        #closeEditBtn {
+            display: none; 
+        }
+
+        #editNoteTitle {
+            font-family: 'Merriweather', serif; 
+            font-weight: 700;
+            font-size: 2.2rem; 
+            color: var(--text-color);
+            border: none;
+            outline: none;
+            width: 100%;
+            padding: 10px 0;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--border-color); 
+            resize: none;
+        }
+
+        #editNoteContent {
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.1rem; 
+            line-height: 1.8;
+            padding: 15px 0;
+            color: var(--text-color);
+            font-weight: 300;
+            border: none;
+            outline: none;
+            width: 100%;
+            flex-grow: 1; 
+            min-height: 300px; 
+            resize: none;
+        }
+
+        #modalFooter {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        #doneEditBtn {
+            padding: 8px 20px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-transform: uppercase;
+        }
+        #doneEditBtn:hover {
+            background-color: #303f9f;
+        }
+        
+        /* === Responsif === */
+
+        @media (max-width: 768px) {
+            
             body {
-                padding: 15px 8px; 
+                flex-direction: column; 
             }
-            #input-area, #daftar-catatan {
-                max-width: 100%; 
-                margin-left: 0;
-                margin-right: 0;
+            
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 70%;
+                min-width: 70%;
+                height: 100%;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-out;
+                box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-container {
+                width: 100%;
+            }
+
+            .header {
+                padding: 10px 15px;
+            }
+            #menuButton {
+                display: block; 
+            }
+            
+            .content {
+                padding: 0 15px; 
+            }
+            
+            #notesGrid {
+                grid-template-columns: 1fr; 
+                gap: 15px; 
+            }
+            
+            .note-card {
+                height: 180px; 
+                padding: 15px;
+            }
+            
+            /* Pada mobile, tombol hapus folder ditampilkan penuh tanpa hover */
+            .delete-folder-btn {
+                opacity: 1; 
+            }
+             #editModalContent {
+                padding: 15px;
+                min-height: 400px;
+            }
+             #editNoteTitle {
+                font-size: 1.5rem; 
+            }
+            
+            #editNoteContent {
+                font-size: 1rem; 
             }
         }
     </style>
 </head>
 <body>
-
-    <div id="app-container">
-
-        <div id="input-area">
-            <input type="text" id="input-catatan" placeholder="Ketik tugas baru lalu tekan Enter..." />
-        </div>
-
-        <ul id="daftar-catatan">
+    
+    <nav class="sidebar" id="sidebar">
+        <h2>CATATAN PERPUSTAKAAN</h2>
+        
+        <ul class="folder-list-sidebar" id="folderList">
             </ul>
-    </div>
+        
+        <div class="folder-creator">
+            <input type="text" id="newFolderName" placeholder="Folder Baru">
+            <button onclick="addFolder()">Buat Folder</button>
+        </div>
+    </nav>
+    
+    <div class="main-container">
+        
+        <header class="header">
+            <button id="menuButton" onclick="toggleSidebar(true)">☰</button> 
+            <h1 id="activeFolderHeader">Catatan Saya</h1> 
+        </header>
 
-    <div id="custom-confirm">
-        <div id="confirm-box">
-            <p>Selesaikan tugas ini?</p> 
-            <div id="confirm-buttons">
-                <button id="btn-cancel" title="Batal Hapus">✖</button>
-                <button id="btn-confirm" title="Selesaikan Tugas">✔</button>
+        <div class="modal-overlay" id="editModalOverlay">
+            <div class="modal-content" id="editModalContent">
+                <button id="closeEditBtn">✖</button> 
+                <input type="hidden" id="editNoteId">
+                <textarea id="editNoteTitle" placeholder="Judul Catatan" rows="1"></textarea>
+                <textarea id="editNoteContent" placeholder="Tulis catatan Anda di sini..." rows="8"></textarea>
+                
+                <div id="modalFooter">
+                    <button id="doneEditBtn">Selesai</button>
+                </div>
             </div>
         </div>
+
+        <div class="modal-overlay" id="confirmationModal">
+            <div class="modal-content">
+                <p id="confirmationMessage"></p>
+                <div class="modal-actions">
+                    <button class="modal-btn" id="confirmCancel">Batal</button>
+                    <button class="modal-btn action-safe" id="confirmOK">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <main class="content">
+            <div class="create-note-box" id="createNoteBox">
+                <input type="text" id="noteTitle" placeholder="Ambil catatan..." class="note-input">
+                <textarea id="noteContent" placeholder="Isi catatan..." class="note-input"></textarea>
+                <button id="addNoteBtn">Tambahkan</button>
+            </div>
+
+            <div class="notes-grid" id="notesGrid">
+            </div>
+        </main>
     </div>
+
+    <div class="modal-overlay" id="folderModalOverlay"></div> 
+
     <script>
-        // 1. KONFIGURASI FIREBASE
+        // --- 1. Konfigurasi Firebase Anda ---
         const firebaseConfig = {
           apiKey: "AIzaSyBoNUK_1_Hfqa8yHUVZ_TWOc28zkImWPbw",
           authDomain: "perpustakaandata-c7726.firebaseapp.com",
@@ -261,139 +644,483 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const catatanRef = database.ref('daftarCatatan'); 
-
-        // Mendapatkan elemen DOM
-        const inputCatatan = document.getElementById('input-catatan');
-        const daftarCatatan = document.getElementById('daftar-catatan');
-
-        // Elemen Modal
-        const customConfirm = document.getElementById('custom-confirm');
-        const btnCancel = document.getElementById('btn-cancel');
-        const btnConfirm = document.getElementById('btn-confirm');
-        let idToDelete = null; 
+        const notesRef = database.ref('notes');
+        const foldersRef = database.ref('folders');
         
-        // Waktu Transisi CSS
-        const TRANSITION_DURATION = 200; // 200ms
+        // --- 2. Variabel & Status UI ---
+        
+        const createNoteBox = document.getElementById('createNoteBox');
+        const noteTitleInput = document.getElementById('noteTitle');
+        const noteContentInput = document.getElementById('noteContent');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+        const notesGrid = document.getElementById('notesGrid');
+        const folderList = document.getElementById('folderList'); 
+        const newFolderNameInput = document.getElementById('newFolderName');
+        const sidebar = document.getElementById('sidebar'); 
+        const activeFolderHeader = document.getElementById('activeFolderHeader');
+        const editModalOverlay = document.getElementById('editModalOverlay');
+        const editModalContent = document.getElementById('editModalContent'); 
+        const editNoteId = document.getElementById('editNoteId');
+        // Menggunakan textarea karena lebih baik untuk input multiline dalam modal
+        const editNoteTitle = document.getElementById('editNoteTitle'); 
+        const editNoteContent = document.getElementById('editNoteContent');
+        const closeEditBtn = document.getElementById('closeEditBtn'); 
+        const doneEditBtn = document.getElementById('doneEditBtn'); // Tombol Baru
+        
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmationMessage = document.getElementById('confirmationMessage');
+        const confirmOK = document.getElementById('confirmOK');
+        const confirmCancel = document.getElementById('confirmCancel');
+        
+        const DEFAULT_FILTER_NAME = 'Semua Catatan';
+        let currentFilter = DEFAULT_FILTER_NAME; 
+        let allNotes = {};
+        let availableFolders = {};
+        
+        let currentConfirmationCallback = null;
+        
+        let pressTimer = null;
+        const LONG_PRESS_DURATION = 500; 
 
-        // Fungsi Tambah Catatan 
-        function tambahCatatan() {
-            const teksCatatan = inputCatatan.value.trim();
-            if (teksCatatan !== "") {
-                const waktu = new Date().toLocaleString('id-ID', {
-                    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
-                
-                catatanRef.push({
-                    teks: teksCatatan,
-                    timestamp: waktu
-                }).then(() => {
-                    inputCatatan.value = ''; 
-                }).catch((error) => {
-                    console.error("Gagal menambahkan catatan: ", error);
-                    alert("Gagal menambahkan catatan.");
-                });
+        // --- 3. Fungsi Utility ---
+        
+        function autoLink(text) {
+            const urlRegex = /(\b(https?:\/\/\S+)|(www\.\S+))/g;
+            return text.replace(urlRegex, function(url) {
+                let fullUrl = url;
+                if (!url.match(/^https?:\/\//i)) {
+                    fullUrl = 'http://' + url;
+                }
+                return `<a href="${fullUrl}" target="_blank" onclick="event.stopPropagation();">${url}</a>`;
+            });
+        }
+        
+        function updateHeaderTitle() {
+            activeFolderHeader.textContent = currentFilter;
+        }
+        
+        // --- 4. Sistem Konfirmasi Manual & Alert ---
+        
+        function showConfirmation(message, onConfirm, onCancel = () => {}, isDestructive = true) {
+            confirmationMessage.textContent = message;
+            
+            confirmOK.classList.remove('action-safe');
+            confirmOK.classList.remove('action-delete');
+            confirmCancel.style.display = 'block';
+            
+            if (isDestructive) {
+                 confirmOK.style.backgroundColor = 'var(--delete-color)';
+                 confirmOK.onmouseover = () => confirmOK.style.backgroundColor = '#d32f2f';
+                 confirmOK.onmouseout = () => confirmOK.style.backgroundColor = 'var(--delete-color)';
+                 confirmOK.style.color = 'white';
+            } else {
+                 confirmOK.classList.add('action-safe');
+                 confirmOK.style.backgroundColor = 'var(--accent-color)';
+                 confirmOK.onmouseover = () => confirmOK.style.backgroundColor = '#303f9f';
+                 confirmOK.onmouseout = () => confirmOK.style.backgroundColor = 'var(--accent-color)';
+                 confirmOK.style.color = 'white';
+            }
+            
+            confirmOK.textContent = isDestructive ? 'HAPUS' : 'OK';
+            currentConfirmationCallback = { onConfirm, onCancel };
+
+            confirmationModal.classList.add('active');
+        }
+
+        confirmOK.onclick = () => {
+            confirmationModal.classList.remove('active');
+            if (currentConfirmationCallback && currentConfirmationCallback.onConfirm) {
+                currentConfirmationCallback.onConfirm(true);
+            }
+        };
+
+        confirmCancel.onclick = () => {
+            confirmationModal.classList.remove('active');
+            if (currentConfirmationCallback && currentConfirmationCallback.onCancel) {
+                currentConfirmationCallback.onCancel(false);
+            }
+        };
+        
+        function showAlert(message) {
+            showConfirmation(message, () => {}, () => {}, false); 
+            
+            confirmCancel.style.display = 'none'; 
+            confirmOK.textContent = 'TUTUP';
+            
+            let originalOkHandler = confirmOK.onclick;
+            
+            const tempOkHandler = () => {
+                confirmationModal.classList.remove('active');
+                confirmCancel.style.display = 'block';
+                confirmOK.textContent = 'OK';
+                confirmOK.onclick = originalOkHandler; 
+                confirmOK.style.backgroundColor = 'var(--accent-color)';
+                confirmOK.onmouseover = () => confirmOK.style.backgroundColor = '#303f9f';
+                confirmOK.onmouseout = () => confirmOK.style.backgroundColor = 'var(--accent-color)';
+            };
+
+            confirmOK.onclick = tempOkHandler;
+        }
+
+        // --- 5. Fungsi Interaksi Sidebar & Folder ---
+        
+        window.toggleSidebar = function(show) {
+             if (window.innerWidth > 768) return; 
+            if (show) {
+                sidebar.classList.add('active');
+            } else {
+                sidebar.classList.remove('active');
             }
         }
         
-        // 2. FUNGSI SIMPAN DENGAN TOMBOL ENTER
-        inputCatatan.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); 
-                tambahCatatan();
+        document.body.addEventListener('click', (event) => {
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active') && !sidebar.contains(event.target) && event.target.id !== 'menuButton') {
+                toggleSidebar(false);
             }
         });
 
-        // Fungsi Batal Hapus (Menangani animasi keluar)
-        function cancelDelete() {
-            customConfirm.classList.remove('show'); 
+
+        window.addFolder = function() {
+            const newName = newFolderNameInput.value.trim();
+            if (newName && newName !== DEFAULT_FILTER_NAME && !availableFolders.hasOwnProperty(newName)) { 
+                foldersRef.child(newName).set(true)
+                .then(() => {
+                    newFolderNameInput.value = '';
+                });
+            } else {
+                showAlert(`Nama folder tidak valid atau sudah ada.`);
+            }
+        };
+
+        window.deleteFolder = function(folderName) {
+            showConfirmation(`Yakin ingin menghapus folder '${folderName}'? SEMUA catatan di dalamnya akan dipindahkan ke '${DEFAULT_FILTER_NAME}'.`, (confirmed) => {
+                if (confirmed) {
+                    notesRef.once('value', (snapshot) => {
+                        const notes = snapshot.val();
+                        if (notes) {
+                            const updates = {};
+                            Object.keys(notes).forEach(noteId => {
+                                if (notes[noteId].folder === folderName) {
+                                    updates[noteId + '/folder'] = null; 
+                                }
+                            });
+
+                            if (Object.keys(updates).length > 0) {
+                                notesRef.update(updates)
+                                    .catch(error => console.error("Gagal memindahkan catatan di folder:", error));
+                            }
+                        }
+                    }).then(() => {
+                        foldersRef.child(folderName).remove()
+                        .then(() => {
+                            if (currentFilter === folderName) {
+                                filterNotes(DEFAULT_FILTER_NAME);
+                            }
+                        })
+                        .catch(error => console.error("Gagal menghapus folder:", error));
+                    });
+                }
+            }, null, true); 
+        };
+
+        function renderFolders(folders) {
+            availableFolders = folders || {}; 
+            folderList.innerHTML = '';
             
-            // Sembunyikan setelah transisi selesai
-            setTimeout(() => {
-                customConfirm.style.display = 'none'; 
-            }, TRANSITION_DURATION); 
-            idToDelete = null; 
+            // Ikon SVG untuk Catatan
+            const noteIcon = `<svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M19,3H5C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3M14.28,15.71L17.5,12.5L14.28,9.29L12.5,11L10.72,9.29L7.5,12.5L10.72,15.71L12.5,13.92L14.28,15.71Z" /></svg>`;
+            
+            // Ikon SVG untuk Folder
+            const folderIcon = `<svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z" /></svg>`;
+            
+            // Ikon SVG untuk Sampah
+            const deleteIcon = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z" /></svg>`;
+            
+            
+            // 1. Semua Catatan (Folder Default: null / Catatan Tanpa Folder)
+            folderList.innerHTML += `
+                <li class="folder-item ${currentFilter === DEFAULT_FILTER_NAME ? 'active' : ''}" 
+                    data-folder="${DEFAULT_FILTER_NAME}" onclick="filterNotes('${DEFAULT_FILTER_NAME}'); toggleSidebar(false);">
+                    <span class="folder-name">${noteIcon} ${DEFAULT_FILTER_NAME}</span>
+                </li>`;
+
+            // 2. Folder Dinamis
+            const folderNames = Object.keys(availableFolders).sort(); 
+            
+            folderNames.forEach(folderName => {
+                const deleteButton = `
+                    <button class="delete-folder-btn" onclick="event.stopPropagation(); deleteFolder('${folderName}')" title="Hapus folder">
+                        ${deleteIcon}
+                    </button>`;
+                
+                folderList.innerHTML += `
+                    <li class="folder-item ${currentFilter === folderName ? 'active' : ''}" 
+                        data-folder="${folderName}" onclick="filterNotes('${folderName}'); toggleSidebar(false);">
+                        <span class="folder-name">${folderIcon} ${folderName}</span>
+                        ${deleteButton}
+                    </li>`;
+            });
+            
+            updateHeaderTitle();
         }
         
-        // Fungsi Konfirmasi Hapus 
-        function confirmDelete() {
-            if (idToDelete) {
-                catatanRef.child(idToDelete).remove().catch((error) => {
-                    console.error("Gagal menghapus catatan: ", error);
-                    alert("Gagal menghapus catatan.");
-                });
-            }
-            // Sembunyikan modal setelah aksi
-            cancelDelete();
+        window.filterNotes = function(folderName) {
+            currentFilter = folderName;
+            renderFolders(availableFolders); 
+            renderNotes(); 
         }
+        
+        foldersRef.on('value', (snapshot) => {
+            const firebaseFolders = snapshot.val() || {};
+            renderFolders(firebaseFolders);
+            renderNotes(); 
+        });
+        
+        // --- 6. Fungsi Edit Pop-up ---
 
-        // 3. FUNGSI HAPUS CATATAN (dimodifikasi untuk menampilkan modal)
-        window.hapusCatatan = function(id) {
-            idToDelete = id; 
-            customConfirm.style.display = 'flex'; 
+        window.openEditModal = function(noteId) {
+            const noteData = allNotes[noteId];
+            if (!noteData) return;
             
-            // Timeout kecil untuk memicu transisi
+            toggleSidebar(false);
+
+            editNoteId.value = noteId;
+            editNoteTitle.value = noteData.title || '';
+            editNoteContent.value = noteData.content || '';
+            
+            editModalOverlay.classList.add('active'); 
+            // Atur fokus ke akhir konten
             setTimeout(() => {
-                customConfirm.classList.add('show'); // Memicu fade-in dan scale-up
-                btnConfirm.focus(); // Fokus tetap pada tombol konfirmasi (centang)
-            }, 5); 
+                editNoteTitle.focus();
+                editNoteTitle.setSelectionRange(editNoteTitle.value.length, editNoteTitle.value.length);
+            }, 350);
         }
 
-        // Event Listeners untuk tombol modal
-        btnCancel.addEventListener('click', cancelDelete);
-        btnConfirm.addEventListener('click', confirmDelete);
+        window.saveEditNote = function(shouldClose = true) { 
+            const noteId = editNoteId.value;
+            const newTitle = editNoteTitle.value.trim();
+            const newContent = editNoteContent.value.trim();
 
-        // Event Listener untuk tombol ENTER dan ESCAPE pada MODAL
+            if (!noteId) return;
+
+            // Jika kosong, tanyakan apakah mau dihapus
+            if (newTitle === "" && newContent === "") {
+                 showConfirmation("Judul dan isi catatan kosong. Hapus catatan ini?", (confirmed) => {
+                     if (confirmed) {
+                         database.ref('notes/' + noteId).remove();
+                         editModalOverlay.classList.remove('active');
+                     }
+                 }, () => {
+                     if (shouldClose) { 
+                        editModalOverlay.classList.remove('active');
+                     }
+                 }, true); 
+                 return;
+            }
+            
+            const oldFolder = allNotes[noteId].folder || null;
+
+            notesRef.child(noteId).update({
+                title: newTitle || "Catatan Tanpa Judul",
+                content: newContent,
+                folder: oldFolder, 
+                timestamp: new Date().toISOString()
+            })
+            .then(() => {
+                if (shouldClose) { 
+                    editModalOverlay.classList.remove('active');
+                }
+            })
+            .catch(error => console.error("Gagal menyimpan catatan:", error));
+        }
+        
+        // EVENT LISTENER MODAL EDIT
+        
+        // Simpan dan Tutup saat tombol "Selesai" diklik
+        doneEditBtn.addEventListener('click', () => {
+             saveEditNote(true);
+        });
+
+        editModalContent.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+        editModalContent.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Simpan dan Tutup saat klik di luar modal
+        editModalOverlay.addEventListener('click', (event) => {
+            if (event.target === editModalOverlay) {
+                saveEditNote(true); 
+            }
+        });
+        
+        // Simpan Cepat (Ctrl+S / Cmd+S)
         document.addEventListener('keydown', (e) => {
-            if (customConfirm.classList.contains('show')) {
-                if (e.key === 'Enter') {
-                    e.preventDefault(); 
-                    confirmDelete();
-                } else if (e.key === 'Escape') {
+            if (editModalOverlay.classList.contains('active')) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                     e.preventDefault();
-                    cancelDelete();
+                    saveEditNote(false); 
+                    // Menghapus showAlert agar lebih mulus, cukup simpan.
+                }
+                // Jika ESC ditekan, simpan dan tutup
+                if (e.key === 'Escape') {
+                    saveEditNote(true);
                 }
             }
         });
 
 
-        // SVG Checkmark Icon (Centang Tebal dan Berbulat)
-        const checkmarkCircleSvg = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke="#4CAF50" stroke-width="2.5" fill="none"/>
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="#4CAF50"/>
-            </svg>
-        `;
+        // --- 7. Fungsi Catatan Baru ---
 
-        // 4. FUNGSI BACA DATA REALTIME (dengan animasi fade-in catatan baru)
-        catatanRef.on('child_added', (snapshot) => {
-            const catatan = snapshot.val();
-            const catatanId = snapshot.key; 
-
-            const listItem = document.createElement('li');
-            listItem.className = 'item-catatan fade-in'; // Tambahkan class fade-in
-            listItem.setAttribute('data-id', catatanId);
-            
-            listItem.innerHTML = `
-                <div class="catatan-teks">${catatan.teks}</div>
-                <button class="btn-hapus" onclick="hapusCatatan('${catatanId}')">${checkmarkCircleSvg}</button>
-            `;
-            
-            daftarCatatan.prepend(listItem);
-            
-            // Panggil timeout untuk memicu transisi dari opacity 0 ke 1
-            setTimeout(() => {
-                listItem.classList.remove('fade-in');
-            }, 5); 
+        noteTitleInput.addEventListener('focus', () => {
+            createNoteBox.classList.add('active');
+            noteTitleInput.placeholder = "Judul";
         });
-        
-        catatanRef.on('child_removed', (snapshot) => {
-            const catatanId = snapshot.key;
-            const itemToRemove = document.querySelector(`li[data-id='${catatanId}']`);
-            if (itemToRemove) {
-                itemToRemove.remove();
+
+        document.body.addEventListener('mousedown', (event) => {
+            const isOutsideNoteBox = !createNoteBox.contains(event.target);
+            const isOutsideModal = !confirmationModal.classList.contains('active') && !editModalOverlay.classList.contains('active');
+            
+            const isOutsideSidebar = (window.innerWidth <= 768) || !sidebar.contains(event.target); 
+            
+            if (isOutsideNoteBox && isOutsideModal && isOutsideSidebar && createNoteBox.classList.contains('active')) {
+                if (noteTitleInput.value.trim() === "" && noteContentInput.value.trim() === "") {
+                    createNoteBox.classList.remove('active');
+                    noteTitleInput.placeholder = "Ambil catatan...";
+                }
             }
         });
+
+        addNoteBtn.addEventListener('click', () => {
+            const title = noteTitleInput.value.trim();
+            const content = noteContentInput.value.trim();
+            
+            if (title === "" && content === "") {
+                showAlert("Catatan kosong!");
+                return;
+            }
+            
+            const finalFolder = currentFilter !== DEFAULT_FILTER_NAME ? currentFilter : null; 
+
+            notesRef.push({
+                title: title || "Catatan Tanpa Judul",
+                content: content,
+                folder: finalFolder, 
+                timestamp: new Date().toISOString()
+            })
+            .then(() => {
+                noteTitleInput.value = '';
+                noteContentInput.value = '';
+                createNoteBox.classList.remove('active');
+                noteTitleInput.placeholder = "Ambil catatan...";
+            });
+        });
+        
+        // --- 8. Fungsi Hapus dan Pindah Catatan ---
+
+        window.deleteNote = function(noteId) {
+            showConfirmation("Yakin ingin menghapus catatan ini?", (confirmed) => {
+                if (confirmed) {
+                    database.ref('notes/' + noteId).remove()
+                        .catch(error => console.error("Gagal menghapus catatan:", error));
+                }
+            }, null, true); 
+        }
+
+        window.moveNoteToFolder = function(noteId, targetFolder) {
+            const folderValue = (targetFolder === DEFAULT_FILTER_NAME || targetFolder === '') ? null : targetFolder;
+            
+            notesRef.child(noteId).update({
+                folder: folderValue,
+                timestamp: new Date().toISOString()
+            })
+            .catch(error => console.error("Gagal memindahkan catatan:", error));
+        }
+
+
+        // --- 9. Fungsi Render Catatan ---
+
+        function renderNotes() {
+            notesGrid.innerHTML = '';
+            
+            const noteKeys = Object.keys(allNotes).sort((a, b) => {
+                const timeA = allNotes[a].timestamp || new Date(0).toISOString();
+                const timeB = allNotes[b].timestamp || new Date(0).toISOString();
+                return timeB.localeCompare(timeA);
+            });
+            
+            const deleteIconNote = `<svg style="width:20px;height:20px" viewBox="0 0 24 24"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" /></svg>`;
+            
+            noteKeys.forEach(noteId => {
+                const noteData = allNotes[noteId];
+                
+                let shouldDisplay = false;
+                
+                if (currentFilter === DEFAULT_FILTER_NAME) {
+                    // Tampilkan hanya jika TIDAK memiliki folder (noteData.folder adalah null/undefined)
+                    if (!noteData.folder) { 
+                        shouldDisplay = true; 
+                    }
+                } else if (noteData.folder === currentFilter) {
+                    // Tampilkan jika cocok dengan nama folder yang sedang dipilih
+                    shouldDisplay = true;
+                } 
+
+                if (shouldDisplay) {
+                    const linkedTitle = autoLink(noteData.title);
+                    const linkedContent = autoLink(noteData.content);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'note-card';
+                    card.id = noteId; 
+                    
+                    card.ondblclick = () => openEditModal(noteId); 
+                    
+                    card.addEventListener('touchstart', (e) => {
+                        e.preventDefault(); 
+                        if (pressTimer) clearTimeout(pressTimer); 
+
+                        pressTimer = setTimeout(() => {
+                            openEditModal(noteId);
+                            clearTimeout(pressTimer);
+                            pressTimer = null;
+                        }, LONG_PRESS_DURATION);
+                    });
+
+                    const clearTimer = () => {
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                    };
+                    card.addEventListener('touchend', (e) => {
+                        if (pressTimer) {
+                            clearTimer();
+                            openEditModal(noteId); 
+                        }
+                    });
+                    card.addEventListener('touchmove', clearTimer); 
+
+                    card.innerHTML = `
+                        <button class="delete-btn" title="Hapus Catatan" onclick="event.stopPropagation(); deleteNote('${noteId}')">
+                            ${deleteIconNote}
+                        </button>
+                        <h3 class="note-card-title">${linkedTitle}</h3>
+                        <p class="note-card-content">${linkedContent}</p>
+                        <div class="note-card-folder">Folder: ${noteData.folder || 'Tidak Ada Folder'}</div>
+                    `;
+                    
+                    notesGrid.appendChild(card);
+                }
+            });
+        }
+        
+        // --- 10. Listener Firebase untuk Catatan ---
+
+        notesRef.on('value', (snapshot) => {
+            allNotes = snapshot.val() || {};
+            renderNotes(); 
+        });
+
     </script>
 </body>
 </html>
